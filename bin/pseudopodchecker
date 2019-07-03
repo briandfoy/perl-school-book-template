@@ -1,0 +1,41 @@
+#!/usr/bin/env perl
+
+use v5.24;
+
+use Local::PseudoPodChecker;
+use Local::Markdown;
+use Data::Dumper;
+
+use IO::Null;
+my $fh = IO::Null->new;
+
+say "Running Pod checker";
+
+my @files = ();
+
+my $rule_length = 80;
+my $lead_length = 10;
+
+for my $file (@ARGV) {
+    print
+    	"-" x $lead_length,
+    	$file,
+    	"-" x ( $rule_length - $lead_length - length $file ),
+    	"\n";
+    my $checker = Local::PseudoPodChecker->new;
+	$checker->output_fh( $fh );
+	unless( eval { $checker->parse_file( $file ) } ) {
+		print "EVAL error! $@" if $@;
+		push @files, $file;
+		}
+
+	if( $checker->any_errata_seen ) {
+		push @files, $file;
+		say Dumper( $checker->{errata} );
+		}
+	}
+
+say "Found " . @files . " files with errors" if @files;
+say "\t", join "\n\t", @files;
+
+exit scalar @files;

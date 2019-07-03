@@ -1,0 +1,18 @@
+#!perl
+use utf8;
+use Local::Linter::Util;
+
+my $errors = 0;
+
+foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+	while( <> ) {
+		next unless / smartmatch  /ix;
+
+		warning( "smart match as one word in $1", $_ );
+		$errors++;
+		}
+	}
+
+exit $errors;
+

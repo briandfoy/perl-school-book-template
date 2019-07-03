@@ -1,0 +1,20 @@
+#!perl
+
+use v5.14;
+use File::Basename qw(basename);
+use List::Util qw(max);
+
+my %errors;
+foreach my $program ( grep { ! /run_all/ } glob 'linters/*' ) {
+	system "$^X -CSD $program";
+	my $basename = basename($program);
+	$errors{$program} = $? >> 8;
+	}
+
+my $max = max( values %errors );
+my $len = length $max;
+
+foreach my $program ( sort { $errors{$b} <=> $errors{$a} } keys %errors ) {
+	last if $errors{$program} < 1;
+	printf "%*d %s\n", $len, $errors{$program}, $program;
+	}

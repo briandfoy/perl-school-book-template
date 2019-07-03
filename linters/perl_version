@@ -1,0 +1,18 @@
+#!perl
+use utf8;
+use Local::Linter::Util;
+
+my $errors = 0;
+
+foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+	while( <> ) {
+		next unless / ( 6 \. [c-z]\b ) /x;
+		next if $1 eq $ENV{PERL6_LATEST_VERSION};
+		warning( "Possible use of outdated Perl version ($1)", $_ );
+		$errors++;
+		}
+	}
+
+exit $errors;
+

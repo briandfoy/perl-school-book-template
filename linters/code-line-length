@@ -1,0 +1,21 @@
+#!perl
+use utf8;
+use Local::Linter::Util;
+
+my $errors = 0;
+
+foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+	while( <> ) {
+		next unless /\A\s+/;
+		my @sublines = split /⏎/, $_;
+
+		foreach my $line ( @sublines ) {
+			next unless length($line) > 80;
+			warning( "Possible long code line", $_ );
+			$errors++;
+			}
+		}
+	}
+
+exit $errors;

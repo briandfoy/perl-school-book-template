@@ -1,0 +1,3 @@
+t/pod.t
+t/pod2md/compile.t
+t/pod2md/over.t

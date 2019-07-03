@@ -1,0 +1,78 @@
+#!/usr/bin/perl
+
+######################################################################
+#
+# A sample PseudoPod to HTML converter script that uses
+# Pod::PseudoPod::HTML.
+#
+# usage:
+#
+# ./pod2html filename1.pod filename2.pod
+#
+# Will produce one html file for each pod file passed in.
+#
+#   filename1.html
+#   filename2.html
+#
+######################################################################
+
+use strict;
+
+use File::Basename;
+use File::Spec::Functions qw( catdir catfile rel2abs );
+use Pod::PseudoPod::HTML;
+
+foreach my $file ( @ARGV )
+	{
+	my $parser = Pod::PseudoPod::HTML->new();
+
+	$parser->add_body_tags(1);     # output a complete html document
+	$parser->add_css_tags(1);      # add css tags for cleaner display
+
+	$parser->no_errata_section(1); # don't put errors in doc output
+	$parser->complain_stderr(1);   # output errors on STDERR instead
+
+	unless( -e $file )
+		{
+		warn "Unable to open '$file': $!\n";
+		next;
+		}
+
+	# HTML output goes to the 'html' subdirectory of the source directory.
+	$file =~ /(.*)\.pod$/;        
+	my $outfile = $1 . '.html';    
+
+	open my $outfh, "> $outfile" or 
+		do { warn "Can't write to $outfile: $!"; next };
+	print $outfh '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Strict//EN">';
+	$parser->output_fh( $outfh );
+	$parser->parse_file( $file );
+	close $outfh;
+
+	fix_tags( $outfile );
+	}
+
+sub fix_tags
+	{
+	my $file =  shift;
+	my $text =  read_file( $file );
+	$text    =~ s!B<([^/].+?)>($|</code>)
+				 !<span class="code_command">$1</span>$2!gmx;
+	$text    =~ s!</f\s*o\s*n\s*t\s*>!</font>!gs;
+	write_file( $file, $text );
+	}
+
+sub read_file
+	{
+	my $file = shift;
+	open my $fh, '<', $file or die "Cannot read '$file': $!\n";
+	my $text = do { local $/; <$fh> };
+	return $text;
+	}
+
+sub write_file
+	{
+	my ($file, $text) = @_;
+	open my $fh, '>', $file or die "Cannot write '$file': $!\n";
+	print $fh $text;
+	}

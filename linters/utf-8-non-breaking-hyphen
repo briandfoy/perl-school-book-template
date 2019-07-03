@@ -1,0 +1,33 @@
+#!perl
+use utf8;
+use Local::Linter::Util;
+
+=pod
+
+We need the non-breaking space for things that shouldn't be separated.
+
+That's ‑, which is #8209 or U+2011
+
+=cut
+
+my $errors = 0;
+
+foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+	while( <> ) {
+		next unless /
+			.*
+			UTF[^\x{2011}](\d+)
+			/x;
+		my $number = $1;
+		next if /^\s+/; # not a verbatim line
+		warning(
+			"Something other than a non-breaking hyphen in UTF‑$number. Should be ‑",
+			$_
+			);
+		$errors++;
+		}
+	}
+
+exit $errors;
+

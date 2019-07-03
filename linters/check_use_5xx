@@ -1,0 +1,19 @@
+#!perl
+use utf8;
+use Local::Linter::Util;
+
+my $errors = 0;
+
+foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+	while( <> ) {
+		next unless /\A \s+ (use|require) \s+ 5 /x;
+		next if( $file =~ m/\bch01.pod\z/ && /\A \s+ use \s+ 5.024;/x );
+
+		warning( "Possible non-v in $1", $_ );
+		$errors++;
+		}
+	}
+
+exit $errors;
+

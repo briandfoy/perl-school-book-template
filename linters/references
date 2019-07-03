@@ -1,0 +1,52 @@
+#!perl
+use utf8;
+
+use v5.22.0;
+use feature qw(postderef);
+no warnings qw(experimental::postderef);
+
+use Local::Linter::Util;
+
+my $errors = 0;
+
+my %labels;
+my %references;
+foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+	while( <> ) {
+		if( /\A =for \s+ labels \s+ (\S+)/x ) {
+			$labels{$1}++;
+			}
+		while( / A<(.*?)(-.+)?> /gx ) {
+			my $reference = $1;
+			next if $reference =~ m/[TF]\./;
+
+			push @{ $references{$reference} }, [ $file, $. ];
+			if( $reference =~ /\A \d /x ) {
+				warning( "Leading digit in ref $reference" );
+				$errors++;
+				}
+			if( $reference =~ /\A appa -? /x ) {
+				warning( "ref appa should be answers" );
+				$errors++;
+				}
+			elsif( $reference =~ /\A appc -? /x ) {
+				warning( "ref appa should be unicode" );
+				$errors++;
+				}
+
+			}
+		}
+	}
+
+foreach my $ref ( keys %references ) {
+	next if exists $labels{$ref};
+	foreach my $pair ( $references{$ref}->@* ) {
+		local( $ARGV, $. ) = $pair->@*;
+		warning( "Unresolved reference $ref" );
+		$errors++;
+		}
+	}
+
+exit $errors;
+

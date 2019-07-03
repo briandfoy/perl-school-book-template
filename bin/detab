@@ -1,0 +1,11 @@
+#!/Users/brian/bin/perls/perl-latest -p -i
+
+no strict;
+
+BEGIN {
+	$sep_char = ' ';
+	$width    = 4;
+	$replacement = $sep_char x $width;
+	}
+
+s/\A (\t+) / $replacement x length $1 /xe;

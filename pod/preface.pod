@@ -1,0 +1,16 @@
+=encoding utf8
+
+=for labels preface
+
+=for status close
+
+=begin todo
+
+=end todo
+
+=head0 Preface
+
+=begin quote
+
+=end quote
+

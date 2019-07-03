@@ -1,0 +1,18 @@
+#!perl
+use utf8;
+use Local::Linter::Util;
+
+my $errors = 0;
+
+foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+	while( <> ) {
+		if( /\A \s+ B<<? \s* (\S+-latest) /x ) {
+			warning( "Possible -latest in command '$1'", $_ );
+			$errors++;
+			}
+		}
+	}
+
+exit $errors;
+

@@ -1,0 +1,27 @@
+#!perl
+use utf8;
+use v5.14;
+
+use Local::Linter::Util;
+
+my %Ignore = map { $_, 1 } qw(
+	Mojo::UserAgent::Role::Bender
+	);
+
+my $errors = 0;
+
+foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+	while( <> ) {
+		next unless / C <<? \s* (?<module>\w+(::\w+)+) \s* >?> /x;
+		next if exists $Ignore{ $+{module} };
+		next if $+{module} =~ m/ ^ X:: /x;
+
+		warning( "Possible module |$1| in C<>", $_ );
+		$errors++;
+		}
+	}
+
+exit $errors;
+
+__END__

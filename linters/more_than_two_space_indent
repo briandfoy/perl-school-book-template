@@ -1,0 +1,47 @@
+#!perl
+use utf8;
+use Local::Linter::Util;
+
+my $errors = 0;
+my $proper_indent_size = 2;
+
+foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+	my $previous_indent = 0;
+
+	while( <> ) {
+		next if /\A\s+#/;
+
+		unless( /\A\t( +)/ ) {
+			$previous_indent = 0;
+			next;
+			}
+		my $this_indent = $1;
+		my $this_length = length $this_indent;
+		next if $this_length > 10; # probably output
+
+		#outdent cast
+		if( $this_length < $previous_indent ) {
+			$previous_indent = $this_indent;
+			next;
+			}
+
+		#overall indent is not a multiple of indent size
+		if( $this_length % $proper_indent_size ) {
+			warning( "Weird indent length", $_ );
+			$errors++;
+			}
+
+		#lastest indent is not the indent size
+		if( $this_indent - $previous_indent > $proper_indent_size ) {
+			warning( "Big indent!", $_ );
+			$errors++;
+			}
+
+		$previous_indent = $this_indent;
+		}
+	}
+
+print "There are $errors indent errors\n";
+
+exit $errors;

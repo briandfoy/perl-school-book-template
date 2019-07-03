@@ -1,0 +1,20 @@
+#!perl
+use utf8;
+use Local::Linter::Util;
+
+my $errors = 0;
+
+foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+	LINE: while( <> ) {
+		next unless /\A =begin \s+ (table|figure) \s* (\S.*)?/x;
+		my( $type, $caption ) = ( $1, $2 );
+		next if $caption;
+
+		warning( "Possible $type without caption", $_ );
+
+		$errors++;
+		}
+	}
+
+exit $errors;

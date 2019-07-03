@@ -1,0 +1,6 @@
+#!/Users/brian/bin/perls/perl-latest
+
+while( <> ) {
+	s|pod/(.+?).pod|markdown/$1.md|;
+	print;
+	}

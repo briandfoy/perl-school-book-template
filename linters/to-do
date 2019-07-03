@@ -1,0 +1,17 @@
+#!perl
+use utf8;
+use Local::Linter::Util;
+
+my $errors = 0;
+
+foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+	while( <> ) {
+		next unless /\A=for status done/;
+		next unless /D<.*?>/x;
+		warning( "Possible to do marker", $_ );
+		$errors++;
+		}
+	}
+
+exit $errors;

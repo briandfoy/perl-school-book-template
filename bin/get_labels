@@ -1,0 +1,41 @@
+#!perl
+use v5.28;
+use utf8;
+
+use File::Spec::Functions;
+
+my @files = glob 'pod/*.pod';
+
+my $chapter_order = 'chapter_order.txt';
+unless( -e $chapter_order ) {
+	die "Could not find the chapter order file '$chapter_order'";
+	}
+
+open my $fh, '<:utf8', $chapter_order or die "Could not open '$chapter_order': $!";
+
+my %chapters = map {
+	state $n = 0;
+	chomp;
+	( $_, $n++ )
+	} <$fh>;
+
+foreach my $file ( @files ) {
+	my( $chapter ) = do {
+		if( $chapters{$file} == 0 ) { 'the Preface' }
+		else { "Chapter $chapters{$file}" }
+		};
+
+	open my $fh, '<', $file or warn "Could not open $file: $!\n";
+	while( <$fh> ) {
+		next unless /\A=for\s+labels\s+/;
+		my( $labels ) = /\A=for\s+labels\s+(.*)/;
+		my @labels = split /\s+/, $labels;
+
+		my $link = sprintf 'ch%03d.xhtml', $chapters{$file} + 1;
+		foreach my $label ( @labels ) {
+			$chapter //= $label;
+			say "$link\t$chapter\t$label\t$file";
+			}
+		last;
+		}
+	}

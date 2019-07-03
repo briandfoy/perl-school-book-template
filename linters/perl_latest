@@ -1,0 +1,18 @@
+#!perl
+use utf8;
+use Local::Linter::Util;
+
+my $errors = 0;
+
+foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+	while( <> ) {
+		if( /\A \s+ B< \s* [\$%] \s+ perl-latest /x ) {
+			warning( "Possible perl-latest", $_ );
+			$errors++;
+			}
+		}
+	}
+
+exit $errors;
+

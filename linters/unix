@@ -1,0 +1,17 @@
+#!perl
+use utf8;
+use Local::Linter::Util;
+
+my $errors = 0;
+
+foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+	while( <> ) {
+		next if /\A\s+/;
+		next unless /\bunix/x;
+		warning( "Possible lowercase unix", $_ );
+		$errors++;
+		}
+	}
+
+exit $errors;

@@ -1,0 +1,37 @@
+#!perl
+use utf8;
+
+use v5.22.0;
+use feature qw(postderef);
+no warnings qw(experimental::postderef);
+
+use Local::Linter::Util;
+
+my $errors = 0;
+
+FILE: foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+
+	LINE: while( <> ) {
+		next unless /=for table/;
+		my $table_flag = 1;
+
+		TABLE: while( <> ) {
+			next unless /\S/;
+			if( /\A=end/ ) {
+				warning( "Empty table" );
+				$errors++;
+				$table_flag = 0;
+				next LINE;
+				}
+			}
+		}
+	}
+
+exit $errors;
+
+__END__
+
+=for table
+
+=end

@@ -1,0 +1,20 @@
+#!perl
+use utf8;
+use Local::Linter::Util;
+
+my $errors = 0;
+
+foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+	while( <> ) {
+		next unless /\A \s+ B <+ \s+ (C\S+) /x;
+		my $prompt = $1;
+		next if $prompt eq 'C:>';
+
+		warning( "Possible bad Windows prompt ($prompt) - should be C:>", $_ );
+		$errors++;
+		}
+	}
+
+exit $errors;
+

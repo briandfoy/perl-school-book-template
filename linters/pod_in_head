@@ -1,0 +1,18 @@
+#!perl
+use utf8;
+use Local::Linter::Util;
+
+my $errors = 0;
+
+foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+	while( <> ) {
+	# don't count A<>
+		next unless /\A =head\d .*? [B-Z]< /x;
+		warning( "Possible pod command in =headn", $_ );
+		$errors++;
+		}
+	}
+
+exit $errors;
+

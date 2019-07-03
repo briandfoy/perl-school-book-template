@@ -1,0 +1,118 @@
+#!/usr/bin/perl -w
+use strict;
+
+=head1 NAME
+
+pod2toc - print a plain text table of contents
+
+=head1 SYNOPSIS
+
+	pod2toc [-0123] files
+	
+	# just head0 elements
+	pod2toc -0 files
+
+	# just head1 elements (not parents!)
+	pod2toc -1 files
+
+	# head0 and head1 elements
+	pod2toc -0 -1 files
+
+	# head0 and head2 elements (not head1!)
+	pod2toc -0 -2 files
+	
+=head1 DESCRIPTION
+
+This script extracts the chapter, section, and other headings and prints
+a text report. It does this for all of the files I sepcify on the 
+command line.
+
+=head1 SEE ALSO
+
+L<Pod::PseudoPod>
+
+=head1 AUTHOR
+
+brian d foy, C<< <bdfoy@cpan.org> >>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2005, brian d foy, All Rights Reserved.
+
+You may redistribute this under the same terms as Perl itself.
+
+=cut
+
+foreach my $file ( @ARGV )
+	{
+	my $parser = SomePseudoPodFormatter->new();
+	print "$file", "-" x ( 73 - length $file ), "\n";
+	
+	$parser->parse_file( $file );
+	}
+	
+BEGIN {
+package SomePseudoPodFormatter;
+use base qw(Pod::PseudoPod);
+use vars qw($AUTOLOAD);
+
+use Data::Dumper;
+use Getopt::Std;
+
+my $Flag;           # Track which element we're in
+my @range = 0 .. 3; # Which levels of head do handle 
+
+my %Opts;
+
+getopts( join( '', @range ), \%Opts);
+
+my %flags = ();
+foreach my $level ( @range )
+	{
+	$flags{"head$level"} = $level if $Opts{$level};
+	}
+
+# create the subroutines which we will handle.  Each start_
+# and send_ just calls flag() with its own name
+foreach my $flag ( keys %flags )
+	{
+	no strict 'refs';
+	foreach my $prepend ( qw( start end ) )
+		{
+		my $name = "${prepend}_$flag";
+		*{$name} = sub { $_[0]->flag( $name ) };
+		}
+	}
+	
+sub flag 
+	{
+	my $self   = shift;
+	my $caller = shift;
+	
+	my $on  = $caller =~ m/^start_/ ? 1 : 0;
+	my $off = $caller =~ m/^end_/   ? 1 : 0;
+	
+	unless( $on or $off ) { return };
+	
+	my( $tag ) = $caller =~ m/_(.*)/g;
+	
+	return unless exists $flags{$tag};
+	
+	#XXX: should this be a stack?
+	$Flag = do {
+		if( $on )     { $flags{$tag} } # set the flag if we're on
+		elsif( $off ) { undef }        # clear if we're off
+		else          { $Flag }        # leave as if otherwise (possible?)
+		};
+	}
+
+sub handle_text 
+	{
+    my($self, $text) = @_;
+    return unless $Flag;
+
+	print "\t" x ( $Flag - 1 ), $text, "\n";
+	}
+}
+
+

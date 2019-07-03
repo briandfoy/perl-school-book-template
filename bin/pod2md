@@ -1,0 +1,137 @@
+#!/usr/bin/perl
+use v5.28;
+use utf8;
+use open qw(:std :utf8);
+use feature qw(signatures);
+no warnings qw(experimental::signatures);
+
+=encoding utf8
+
+=pod
+
+=head1 NAME
+
+pod2md - a custom pseudopod to markdown generator
+
+=head1 SYNOPOSIS
+
+	# output to markdown files based off the input filenames
+	% pod2md filename1.pod filename2.pod
+
+	# output to a particular filename (caoncatenating all inputs)
+	% pod2md -O foo.md filename1.pod filename2.pod
+
+=head1 DESCRIPTION
+
+=cut
+
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+
+use Data::Dumper;
+use File::Basename;
+use File::Path qw( make_path );
+use File::Spec::Functions qw( catdir catfile rel2abs );
+use Getopt::Long;
+use IO::Null;
+use Local::Markdown;
+
+run(@ARGV) unless caller;
+
+
+sub run ( @args ) {
+	my $stdout = 0;
+	my $outfile;
+
+	my @files = do {
+		local @ARGV = @args;
+		GetOptions(
+			"o"   => \$stdout,
+			"O=s" => \$outfile,
+			)  or die("Error in command line arguments\n");
+		@ARGV;
+		};
+
+	$ENV{BOOK_ID} //= 'generic_book'; #/
+	print "Book ID is ", book_id(), "\n";
+
+	make_path markdown_dir() unless -d markdown_dir();
+
+	open my $fh, '<:utf8', 'refs.txt';
+	my %refs;
+	while( <$fh> ) {
+		chomp;
+		my( $chapter, $text, $link, $file ) = split /\t/;
+		$refs{$file} = $text;
+		}
+	close $fh;
+
+	foreach my $file ( @files ) {
+		my( $chapter_num ) = $refs{$file} =~ m/(\d+)\z/;
+		process_file( $file,
+			stdout       => $stdout,
+			outfile      => $outfile,
+			chapter      => $chapter_num,
+			);
+		}
+	}
+
+
+sub process_file ( $file, %args ) {
+	say "Processing $file";
+	say "Got chapter '$args{chapter}'";
+	my $parser = Local::Markdown->new();
+	$parser->set_title( book_id() );
+
+	open my $in, '<:utf8', $file or
+		do { warn "Can't read from $file: $!"; next };
+	my $label;
+	while( <$in> ) {
+		next unless /\A =for \s+ labels \s+ (\S+) /x;
+		$label = $1;
+		$parser->set_label( $label );
+		close $in;
+		last;
+		}
+
+	my $chapter_text = do {
+		   if( $file eq 'pod/preface.pod' ) { 'Preface' }
+		else { "Chapter $args{'chapter'}" }
+		};
+
+	$parser->set_chapter( $args{chapter} );
+	$parser->set_chapter_num( $chapter_text );
+
+	$parser->no_errata_section(1); # don't put errors in doc output
+	$parser->complain_stderr(1);   # output errors on STDERR instead
+
+	unless( -e $file ) {
+		warn "Unable to find '$file': $!\n";
+		next;
+		}
+
+	my $outfh = do {
+		if( $args{'stdout'} ) { \*STDOUT }
+		else {
+			my $newfile = do {
+				if( $args{'outfile'} ) { $args{'outfile'} }
+				elsif( $file =~ m| (?:pod /)? (.*) \. pod \z|x ) {
+					my $basename = basename( $1 );
+					catfile( markdown_dir(), $basename . extension() );
+					}
+				};
+			open my $fh, ">>:encoding(UTF-8)", $newfile or
+				do { warn "Can't write to $newfile: $!"; next };
+			$fh;
+			}
+		};
+
+	$parser->output_fh( $outfh );
+	$parser->parse_file( $file );
+
+	close $outfh;
+	}
+
+sub book_id      () { $ENV{BOOK_ID} //= 'generic_book' }
+sub markdown_dir () { $ENV{MARKDOWN_DIR} //= 'markdown' }
+sub extension    () { '.md' }

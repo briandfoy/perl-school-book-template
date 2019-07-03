@@ -1,0 +1,19 @@
+=encoding utf8
+
+=for labels conclusion
+
+=for status done
+
+=begin todo
+
+=end todo
+
+=head0 Conclusion
+
+=begin quote
+
+
+=end quote
+
+
+=cut

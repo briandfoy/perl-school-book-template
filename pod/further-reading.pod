@@ -1,0 +1,18 @@
+=encoding utf8
+
+=for labels resources
+
+=for status close
+
+=begin todo
+
+=end todo
+
+=head0 Resources
+
+=begin quote
+
+=end quote
+
+
+=cut

@@ -1,0 +1,23 @@
+#!perl
+use utf8;
+use Local::Linter::Util;
+
+my $errors = 0;
+
+foreach my $file ( get_all_pods() ) {
+	local @ARGV = $file;
+	while( <> ) {
+		next if /\A=cell/;
+		if( /\bChapter\b/ ) {
+			warning( "Possible explicit Chapter", $_ );
+			$errors++;
+			}
+		if( /\bSection\b/ ) {
+			warning( "Possible explicit Section", $_ );
+			$errors++;
+			}
+		}
+	}
+
+exit $errors;
+

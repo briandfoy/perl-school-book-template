@@ -1,0 +1,38 @@
+/* This defines styles and classes used in the book */
+h1, h2, h3, h4, h5, h6, body {
+  font-family: arail, helvetica, sans-serif;
+  text-align: left;
+  font-face: bold;
+}
+body { margin: 5%; text-align: justify; }
+
+h1.title { }
+h2.author { }
+h3.date { }
+ol.toc { padding: 0; margin-left: 1em; }
+ol.toc li { list-style-type: none; margin: 0; padding: 0; }
+
+div.code {
+	padding-left: 1em;
+	}
+
+div.code > pre span.userinput {
+	text-style: bold;
+	}
+
+p.chapter {
+	text-decoration: underline;
+	position: relative;
+	top: -4em;
+	}
+
+p.quote {
+	font-style: italic;
+	font-size: 0.8em;
+	margin-left: 20%;
+	margin-right: 20%;
+	}
+
+div.center {
+	margin: auto;
+	}
